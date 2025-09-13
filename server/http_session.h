@@ -13,9 +13,11 @@ private:
     boost::beast::http::request<boost::beast::http::string_body> request;
 public:
     HttpSession(tcp::socket &&socket);
+    void start();
     void readRequest();
     void onRead(boost::beast::error_code ec,std::size_t bytes_transferred);
-    void writeResponse();
+    void sendResponse(boost::beast::http::message_generator &&msg);
+    void onSend(bool keep_alive,boost::beast::error_code ec,std::size_t bytes_transferred);
     void closeSession();
     ~HttpSession();
 };

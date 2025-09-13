@@ -5,10 +5,11 @@
 AppServer::AppServer(const uint64_t &port) : port(port),acceptor(ioContext){
     acceptor.open(tcp::v4());
     acceptor.bind(tcp::endpoint(tcp::v4(),port));
+    acceptor.set_option(boost::asio::socket_base::reuse_address(true));
+    acceptor.listen();
 }
 
 void AppServer::start(){
-    acceptor.listen();
     doAccept();
     ioContext.run();
 }
@@ -23,8 +24,7 @@ void AppServer::onAccept(boost::beast::error_code ec,tcp::socket socket){
         return;
     }
 
-    std::make_shared<HttpSession>(std::move(socket))->readRequest();
-
+    std::make_shared<HttpSession>(std::move(socket))->start();
 
     doAccept();
 }

@@ -6,12 +6,10 @@
 #include <boost/beast.hpp>
 
 class RootHandler : public std::enable_shared_from_this<RootHandler>{
-    using tcp = boost::asio::ip::tcp;
 private:
-    tcp::socket socket;
 public:
-    RootHandler(tcp::socket &&socket);
-    void handleRequest();
+    RootHandler();
+    boost::beast::http::message_generator handleRequest(boost::beast::http::request<boost::beast::http::string_body> &&request);
     ~RootHandler();
 };
 
