@@ -5,7 +5,7 @@
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 
-class RootHandler : public std::enable_shared_from_this<RootHandler>{
+class RootHandler{
 private:
 public:
     RootHandler();
