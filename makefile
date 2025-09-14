@@ -1,6 +1,6 @@
 CXX := g++ -std=c++17
 INC_FLAGS := -Idependencies/boost-1.88.0_build/include
-LD_FLAGS := -Ldependencies/boost-1.88.0_build/lib -lpthread
+LD_FLAGS := -Ldependencies/boost-1.88.0_build/lib -lpthread -Wl,-Bstatic -lboost_json -Wl,-Bdynamic
 SRC_FILES := $(shell find ./handlers ./server main.cpp -name '*.cpp')
 OBJ_FILES := $(SRC_FILES:%.cpp=./build/%.o)
 

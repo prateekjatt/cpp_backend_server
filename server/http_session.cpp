@@ -47,7 +47,7 @@ void HttpSession::onSend(bool keep_alive,boost::beast::error_code ec,std::size_t
 
 void HttpSession::closeSession(){
     boost::beast::error_code ec;
-    stream.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send,ec);
+    stream.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both,ec);
 }
 
 HttpSession::~HttpSession(){
