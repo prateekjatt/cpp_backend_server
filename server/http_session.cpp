@@ -19,11 +19,11 @@ void HttpSession::onRead(boost::beast::error_code ec,std::size_t bytes_transferr
         return closeSession();
     }
     if(ec){
-        std::cout << "Error Reading Request: " << ec << std::endl;
+        std::cout << "ERROR: While Reading Request: " << ec.message() << std::endl;
         return;
     }
 
-    std::cout << "Request Received:-\n" << request << std::endl;
+    std::cout << "INFO: Request Received:-\n" << request << std::endl;
 
     RootHandler rootHandler;
     sendResponse(rootHandler.handleRequest(std::move(request)));
@@ -36,7 +36,7 @@ void HttpSession::sendResponse(boost::beast::http::message_generator &&msg){
 
 void HttpSession::onSend(bool keep_alive,boost::beast::error_code ec,std::size_t bytes_transferred){
     if(ec){
-        std::cout << "Error Sending Response: " << ec.message() << std::endl;
+        std::cout << "ERROR: While Sending Response: " << ec.message() << std::endl;
         return;
     }
     if(!keep_alive){
