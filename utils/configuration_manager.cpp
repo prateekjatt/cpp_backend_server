@@ -2,9 +2,12 @@
 
 std::unordered_map<std::string,std::string> ConfigurationManager::configs;
 
-
 void ConfigurationManager::loadFromFile(const std::string &fileName){
     std::ifstream fileStream(fileName);
+    if(!fileStream.is_open()){
+        std::cerr << "Error: Unable to Open Configuration File: " << fileName << std::endl;
+        exit(EXIT_FAILURE);
+    }
     std::string line;
     while(std::getline(fileStream,line)){
         int idx = line.find_first_of('=');

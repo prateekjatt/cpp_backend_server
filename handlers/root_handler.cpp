@@ -4,12 +4,14 @@ RootHandler::RootHandler(){
 }
 
 boost::beast::http::message_generator RootHandler::handleRequest(boost::beast::http::request<boost::beast::http::string_body> &&request){
-    boost::beast::http::response<boost::beast::http::string_body> res{boost::beast::http::status::ok,request.version()};
+    boost::beast::http::response<boost::beast::http::string_body> res{boost::beast::http::status::not_found,request.version()};
     res.keep_alive(request.keep_alive());
     if(request.method() == boost::beast::http::verb::get && request.target() == "/"){
+        res.result(boost::beast::http::status::ok);
         res.set(boost::beast::http::field::content_type,"text/html");
         res.body() = "<h1>Web Server Using Boost C++!</h1>";
     } else if(request.method() == boost::beast::http::verb::post && request.target() == "/"){
+        res.result(boost::beast::http::status::ok);
         boost::system::error_code ec;
         boost::json::value requestJson = boost::json::parse(request.body(),ec);
         if(ec){

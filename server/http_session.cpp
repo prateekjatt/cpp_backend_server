@@ -2,6 +2,7 @@
 #include "../handlers/root_handler.h"
 
 HttpSession::HttpSession(tcp::socket &&socket):stream(std::move(socket)){
+    logger = Logger::getInstance();
 }
 
 void HttpSession::start(){
@@ -19,11 +20,11 @@ void HttpSession::onRead(boost::beast::error_code ec,std::size_t bytes_transferr
         return closeSession();
     }
     if(ec){
-        std::cout << "ERROR: While Reading Request: " << ec.message() << std::endl;
+        logger->log(LogType::ERROR,"While Reading Request: " + ec.what());
         return;
     }
 
-    std::cout << "INFO: Request Received:-\n" << request << std::endl;
+    logger->log(LogType::INFO, std::string(request.method_string()) + " " + std::string(request.target()) + " HTTP/" + std::to_string(request.version()/10) + "." + std::to_string(request.version()%10));
 
     RootHandler rootHandler;
     sendResponse(rootHandler.handleRequest(std::move(request)));
@@ -36,7 +37,7 @@ void HttpSession::sendResponse(boost::beast::http::message_generator &&msg){
 
 void HttpSession::onSend(bool keep_alive,boost::beast::error_code ec,std::size_t bytes_transferred){
     if(ec){
-        std::cout << "ERROR: While Sending Response: " << ec.message() << std::endl;
+        logger->log(LogType::ERROR,"While Sending Response: " + ec.what());
         return;
     }
     if(!keep_alive){

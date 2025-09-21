@@ -1,9 +1,9 @@
 #ifndef _DB_CLIENT_H_
 #define _DB_CLIENT_H_
 
-#include <iostream>
 #include <boost/asio.hpp>
 #include <boost/mysql.hpp>
+#include "../utils/logger.h"
 
 class DBClient{
 private:
@@ -11,11 +11,16 @@ private:
     uint16_t port;
     std::string username;
     std::string password;
+    std::string database;
     boost::mysql::any_connection conn;
-public:
+    Logger *logger;
+    static DBClient *dbClient;
     DBClient(boost::asio::io_context &ioContext);
+public:
+    static void createInstance(boost::asio::io_context &ioContext);
+    static DBClient* getInstance();
     void connect();
-    void execute();
+    boost::mysql::results execute(const auto &query);
     void disconnect();
     ~DBClient();
 };

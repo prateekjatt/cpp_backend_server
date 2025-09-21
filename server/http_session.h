@@ -1,9 +1,9 @@
 #ifndef _HTTP_SESSION_H_
 #define _HTTP_SESSION_H_
 
-#include <iostream>
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
+#include "../utils/logger.h"
 
 class HttpSession : public std::enable_shared_from_this<HttpSession>{
     using tcp = boost::asio::ip::tcp;
@@ -11,6 +11,7 @@ private:
     boost::beast::tcp_stream stream;
     boost::beast::flat_buffer buff;
     boost::beast::http::request<boost::beast::http::string_body> request;
+    Logger *logger;
 public:
     HttpSession(tcp::socket &&socket);
     void start();
