@@ -5,12 +5,8 @@
 #include <boost/beast.hpp>
 #include <boost/json.hpp>
 
-class RootHandler{
-private:
-public:
-    RootHandler();
-    boost::beast::http::message_generator handleRequest(boost::beast::http::request<boost::beast::http::string_body> &&request);
-    ~RootHandler();
+namespace RootHandler{
+    void handleRequest(boost::beast::http::request<boost::beast::http::string_body> &&request, boost::beast::http::response<boost::beast::http::string_body> &response);
 };
 
 #endif

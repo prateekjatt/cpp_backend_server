@@ -16,11 +16,11 @@ int main() {
         logger->log(LogType::ERROR,"Unable to find required configuration variables for server!");
         std::exit(EXIT_FAILURE);
     }
-
+    
+    std::make_shared<AppServer>(ioContext,hostname,std::atoi(port.c_str()))->start();
+    
     DBClient::createInstance(ioContext);
     DBClient::getInstance()->connect();
-
-    std::make_shared<AppServer>(ioContext,hostname,std::atoi(port.c_str()))->start();
 
     ioContext.run();
 
