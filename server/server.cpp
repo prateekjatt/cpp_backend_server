@@ -1,5 +1,4 @@
 #include "server.h"
-#include "http_session.h"
 
 AppServer::AppServer(boost::asio::io_context &ioContext,const std::string &hostname,const uint16_t &port) : hostname(hostname),port(port),acceptor(ioContext){
     logger = Logger::getInstance();
@@ -24,7 +23,7 @@ void AppServer::onAccept(boost::beast::error_code ec,tcp::socket socket){
         return;
     }
 
-    std::make_shared<HttpSession>(std::move(socket))->start();
+    std::make_shared<HttpSession>(std::move(socket),router)->start();
 
     doAccept();
 }

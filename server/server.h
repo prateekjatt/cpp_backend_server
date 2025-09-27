@@ -4,6 +4,7 @@
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include "../utils/logger.h"
+#include "http_session.h"
 
 class AppServer : public std::enable_shared_from_this<AppServer>{
     using tcp = boost::asio::ip::tcp;
@@ -12,6 +13,7 @@ private:
     std::string hostname;
     tcp::acceptor acceptor;
     Logger *logger;
+    Router router;
 public:
     AppServer(boost::asio::io_context &ioContext,const std::string &hostname,const uint16_t &port);
     void start();

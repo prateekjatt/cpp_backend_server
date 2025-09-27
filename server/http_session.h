@@ -4,6 +4,7 @@
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include "../utils/logger.h"
+#include "router.h"
 
 class HttpSession : public std::enable_shared_from_this<HttpSession>{
     using tcp = boost::asio::ip::tcp;
@@ -12,8 +13,9 @@ private:
     boost::beast::flat_buffer buff;
     boost::beast::http::request<boost::beast::http::string_body> request;
     Logger *logger;
+    Router router;
 public:
-    HttpSession(tcp::socket &&socket);
+    HttpSession(tcp::socket &&socket,const Router &router);
     void start();
     void readRequest();
     void onRead(boost::beast::error_code ec,std::size_t bytes_transferred);

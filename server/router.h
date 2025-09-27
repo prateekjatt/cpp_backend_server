@@ -5,20 +5,28 @@
 #include <boost/beast.hpp>
 #include <boost/json.hpp>
 #include <boost/url.hpp>
-#include <list>
+#include <vector>
 #include "../handlers/root_handler.h"
+#include "../utils/logger.h"
 
-using handler = std::function<void(boost::beast::http::request<boost::beast::http::string_body>&&, boost::beast::http::response<boost::beast::http::string_body>&)>;
+struct Route{
+    std::string path; 
+    std::unordered_map<std::string,RouteHandler> methodHandlers;
+};
+
+struct SegementedRoute{
+    std::vector<std::string> path; 
+    std::unordered_map<std::string,RouteHandler> methodHandlers;
+};
 
 class Router{
-private:
-    const std::list<std::tuple<std::string,std::string,handler>> routes = {
-        {"GET", "/", RootHandler::handleRequest},
-    };
-
-    std::vector<std::list<std::tuple<std::string,std::string,handler>>::const_iterator> findRouteByPath(const std::string &path);
+private:    
+    std::vector<SegementedRoute> segementedRoutes;
+    Logger *logger;
+    bool findRouteByPath(const boost::urls::segments_view &path,const std::string &method,std::vector<std::pair<std::string,std::string>> &pathParams,RouteHandler &handler);
 public:
-    boost::beast::http::message_generator handleRequest(boost::beast::http::request<boost::beast::http::string_body> &&request);
+    Router();
+    boost::beast::http::message_generator handleRequest(HttpRequest &&request);
 };
 
 #endif

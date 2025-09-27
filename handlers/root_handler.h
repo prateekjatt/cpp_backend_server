@@ -4,9 +4,10 @@
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <boost/json.hpp>
+#include "type_alias.h"
 
 namespace RootHandler{
-    void handleRequest(boost::beast::http::request<boost::beast::http::string_body> &&request, boost::beast::http::response<boost::beast::http::string_body> &response);
+    void handleRequest(HttpRequest &&request, HttpResponse &response,const RequestParams &requestParams);
 };
 
 #endif

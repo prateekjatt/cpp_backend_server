@@ -1,7 +1,6 @@
 #include "http_session.h"
-#include "router.h"
 
-HttpSession::HttpSession(tcp::socket &&socket):stream(std::move(socket)){
+HttpSession::HttpSession(tcp::socket &&socket,const Router &router):stream(std::move(socket)),router(router){
     logger = Logger::getInstance();
 }
 
@@ -26,7 +25,6 @@ void HttpSession::onRead(boost::beast::error_code ec,std::size_t bytes_transferr
 
     logger->log(LogType::INFO, std::string(request.method_string()) + " " + std::string(request.target()) + " HTTP/" + std::to_string(request.version()/10) + "." + std::to_string(request.version()%10));
 
-    Router router;
     sendResponse(router.handleRequest(std::move(request)));
 }
 
