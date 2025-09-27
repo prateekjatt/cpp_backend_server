@@ -1,8 +1,5 @@
 #include "router.h"
-
-static std::vector<Route> routes = {
-    {"/{user}",{ {"GET", RootHandler::handleRequest} }},
-};
+#include "routes.h"
 
 Router::Router(){
     logger = Logger::getInstance();
@@ -42,17 +39,16 @@ boost::beast::http::message_generator Router::handleRequest(HttpRequest &&reques
     bool anyRouteMatched = findRouteByPath(parsed_url.value().segments(),request.method_string(),pathParams,handler);
 
     if(handler != nullptr) {
-        RequestParams requestParams = boost::json::object();
-        requestParams.as_object()["pathParams"] = boost::json::object();
-        requestParams.as_object()["queryParams"] = boost::json::object();
-        
+        RequestParams requestParams;
+        requestParams["pathParams"] = {};
+        requestParams["queryParams"] = {};
         std::for_each(pathParams.begin(),pathParams.end(),[&requestParams](const std::pair<std::string,std::string> &a){
-            requestParams.as_object()["pathParams"].as_object()[a.first] = a.second;
+            requestParams["pathParams"][a.first] = a.second;
         });
         
         const auto queryParams = parsed_url.value().params(); 
         std::for_each(queryParams.begin(),queryParams.end(),[&requestParams](const boost::urls::param_view &a){
-            requestParams.as_object()["queryParams"].as_object()[a.key] = a.value;
+            requestParams["queryParams"][a.key] = a.value;
         });
 
         handler(std::move(request),response,requestParams);
@@ -73,7 +69,6 @@ boost::beast::http::message_generator Router::handleRequest(HttpRequest &&reques
         res.as_object()["message"] = "404 - Not Found!";
         response.body() = boost::json::serialize(res);
     }
-    
     response.prepare_payload();
     return response;
 }

@@ -7,5 +7,8 @@ void RootHandler::handleRequest(HttpRequest &&request, HttpResponse &response,co
     boost::json::value res = boost::json::object();
     res.as_object()["status"] = "success";
     res.as_object()["message"] = "Web Server Using Boost C++!";
+    res.as_object()["pathParams"] = requestParams.at("pathParams").at("user");
+    res.as_object()["queryParams"] = requestParams.at("queryParams").find("query") != requestParams.at("queryParams").end()? requestParams.at("queryParams").at("query"):"";
+
     response.body() = boost::json::serialize(res);
 }

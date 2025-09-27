@@ -6,13 +6,8 @@
 #include <boost/json.hpp>
 #include <boost/url.hpp>
 #include <vector>
-#include "../handlers/root_handler.h"
 #include "../utils/logger.h"
-
-struct Route{
-    std::string path; 
-    std::unordered_map<std::string,RouteHandler> methodHandlers;
-};
+#include "../handlers/type_alias.h"
 
 struct SegementedRoute{
     std::vector<std::string> path; 
