@@ -1,6 +1,7 @@
 #include "root_handler.h"
+#include "../db_client/db_client.h"
 
-void RootHandler::handleRequest(HttpRequest &&request, HttpResponse &response,const RequestParams &requestParams){
+boost::asio::awaitable<void> RootHandler::handleRequest(HttpRequest &&request, HttpResponse &response,const RequestParams &requestParams){
     response.result(boost::beast::http::status::ok);
     response.set(boost::beast::http::field::content_type,"application/json");
     

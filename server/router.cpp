@@ -16,7 +16,7 @@ Router::Router(){
     }
 }
 
-boost::beast::http::message_generator Router::handleRequest(HttpRequest &&request){
+boost::asio::awaitable<boost::beast::http::message_generator> Router::handleRequest(HttpRequest &&request){
     HttpResponse response;
     response.version(request.version());
     response.keep_alive(request.keep_alive());
@@ -31,7 +31,7 @@ boost::beast::http::message_generator Router::handleRequest(HttpRequest &&reques
         res.as_object()["message"] = "400 - Bad Request!";
         response.body() = boost::json::serialize(res);
         response.prepare_payload();
-        return response;
+        co_return response;
     }
     
     std::vector<std::pair<std::string,std::string>> pathParams;
@@ -51,7 +51,7 @@ boost::beast::http::message_generator Router::handleRequest(HttpRequest &&reques
             requestParams["queryParams"][a.key] = a.value;
         });
 
-        handler(std::move(request),response,requestParams);
+        co_await handler(std::move(request),response,requestParams);
     } else if(anyRouteMatched){
         response.result(boost::beast::http::status::method_not_allowed);
         response.set(boost::beast::http::field::content_type,"application/json");
@@ -70,7 +70,7 @@ boost::beast::http::message_generator Router::handleRequest(HttpRequest &&reques
         response.body() = boost::json::serialize(res);
     }
     response.prepare_payload();
-    return response;
+    co_return response;
 }
 
 bool Router::findRouteByPath(const boost::urls::segments_view &path,const std::string &method,std::vector<std::pair<std::string,std::string>> &pathParams,RouteHandler &handler) {

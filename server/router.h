@@ -21,7 +21,7 @@ private:
     bool findRouteByPath(const boost::urls::segments_view &path,const std::string &method,std::vector<std::pair<std::string,std::string>> &pathParams,RouteHandler &handler);
 public:
     Router();
-    boost::beast::http::message_generator handleRequest(HttpRequest &&request);
+    boost::asio::awaitable<boost::beast::http::message_generator> handleRequest(HttpRequest &&request);
 };
 
 #endif

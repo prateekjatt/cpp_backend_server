@@ -20,7 +20,7 @@ public:
     static void createInstance(boost::asio::io_context &ioContext);
     static DBClient* getInstance();
     void connect();
-    boost::mysql::results execute(const auto &query);
+    boost::asio::awaitable<boost::mysql::results> execute(const std::string &query);
     void disconnect();
     ~DBClient();
 };

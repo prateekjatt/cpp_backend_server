@@ -16,7 +16,8 @@ void HttpSession::readRequest(){
 
 void HttpSession::onRead(boost::beast::error_code ec,std::size_t bytes_transferred){
     if(ec == boost::beast::error::timeout || ec == boost::beast::http::error::end_of_stream){
-        return closeSession();
+        closeSession();
+        return;
     }
     if(ec){
         logger->log(LogType::ERROR,"While Reading Request: " + ec.what());
@@ -25,7 +26,11 @@ void HttpSession::onRead(boost::beast::error_code ec,std::size_t bytes_transferr
 
     logger->log(LogType::INFO, std::string(request.method_string()) + " " + std::string(request.target()) + " HTTP/" + std::to_string(request.version()/10) + "." + std::to_string(request.version()%10));
 
-    sendResponse(router.handleRequest(std::move(request)));
+    boost::asio::co_spawn(stream.get_executor(),[self=shared_from_this()]() -> boost::asio::awaitable<void> {
+
+        self->sendResponse(co_await self->router.handleRequest(std::move(self->request)));
+        
+    }, boost::asio::detached);
 }
 
 void HttpSession::sendResponse(boost::beast::http::message_generator &&msg){
@@ -39,7 +44,8 @@ void HttpSession::onSend(bool keep_alive,boost::beast::error_code ec,std::size_t
         return;
     }
     if(!keep_alive){
-        return closeSession();
+        closeSession();
+        return;
     }
     readRequest();
 }

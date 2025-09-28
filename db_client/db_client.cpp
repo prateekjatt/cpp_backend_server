@@ -45,10 +45,10 @@ void DBClient::connect(){
     logger->log(LogType::INFO,"Database Connected Successfully");
 }
 
-boost::mysql::results DBClient::execute(const auto &query){
+boost::asio::awaitable<boost::mysql::results> DBClient::execute(const std::string &query){
     boost::mysql::results result;
-    conn.execute(query,result);
-    return result;
+    co_await conn.async_execute(query,result);
+    co_return result;
 }
 
 void DBClient::disconnect(){
