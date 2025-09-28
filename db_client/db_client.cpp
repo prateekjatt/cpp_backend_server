@@ -47,7 +47,7 @@ void DBClient::connect(){
 
 boost::asio::awaitable<boost::mysql::results> DBClient::execute(const std::string &query){
     boost::mysql::results result;
-    co_await conn.async_execute(query,result);
+    co_await conn.async_execute(query,result,boost::asio::use_awaitable);
     co_return result;
 }
 

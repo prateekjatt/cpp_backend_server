@@ -11,14 +11,14 @@
 
 struct SegementedRoute{
     std::vector<std::string> path; 
-    std::unordered_map<std::string,RouteHandler> methodHandlers;
+    std::unordered_map<boost::beast::http::verb,RouteHandler> methodHandlers;
 };
 
 class Router{
 private:    
     std::vector<SegementedRoute> segementedRoutes;
     Logger *logger;
-    bool findRouteByPath(const boost::urls::segments_view &path,const std::string &method,std::vector<std::pair<std::string,std::string>> &pathParams,RouteHandler &handler);
+    bool findRouteByPath(const boost::urls::segments_view &path,const boost::beast::http::verb &method,std::vector<std::pair<std::string,std::string>> &pathParams,RouteHandler &handler);
 public:
     Router();
     boost::asio::awaitable<boost::beast::http::message_generator> handleRequest(HttpRequest &&request);

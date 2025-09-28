@@ -4,15 +4,15 @@
 #include <vector>
 #include <unordered_map>
 #include "../handlers/type_alias.h"
-#include "../handlers/root_handler.h"
+#include "../handlers/user_handler.h"
 
 struct Route{
     std::string path; 
-    std::unordered_map<std::string,RouteHandler> methodHandlers;
+    std::unordered_map<boost::beast::http::verb,RouteHandler> methodHandlers;
 };
 
 static std::vector<Route> routes = {
-    {"/{user}",{ {"GET", RootHandler::handleRequest} }},
+    {"/signup",{ {boost::beast::http::verb::post, UserHandler::createUser} }},
 };
 
 #endif

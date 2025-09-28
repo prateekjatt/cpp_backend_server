@@ -24,8 +24,6 @@ void HttpSession::onRead(boost::beast::error_code ec,std::size_t bytes_transferr
         return;
     }
 
-    logger->log(LogType::INFO, std::string(request.method_string()) + " " + std::string(request.target()) + " HTTP/" + std::to_string(request.version()/10) + "." + std::to_string(request.version()%10));
-
     boost::asio::co_spawn(stream.get_executor(),[self=shared_from_this()]() -> boost::asio::awaitable<void> {
 
         self->sendResponse(co_await self->router.handleRequest(std::move(self->request)));
