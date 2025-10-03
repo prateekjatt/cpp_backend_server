@@ -1,5 +1,5 @@
 #include "user_handler.h"
-#include "../db_client/db_client.h"
+#include "../models/user_model.h"
 
 boost::asio::awaitable<void> UserHandler::createUser(HttpRequest &&request, HttpResponse &response,const RequestParams &requestParams){
     
@@ -28,18 +28,22 @@ boost::asio::awaitable<void> UserHandler::createUser(HttpRequest &&request, Http
         response.body() = boost::json::serialize(res);
         co_return;
     }
-    if(!reqBody.get_object().at("username").is_string() || !reqBody.get_object().at("password").is_string() || !reqBody.get_object().at("email").is_string()){
+
+    const boost::json::value username = reqBody.get_object().at("username"); 
+    const boost::json::value password = reqBody.get_object().at("password"); 
+    const boost::json::value email = reqBody.get_object().at("email"); 
+    if(!username.is_string() || !password.is_string() || !email.is_string()){
         response.result(boost::beast::http::status::unprocessable_entity);
         response.set(boost::beast::http::field::content_type,"application/json");
     
         boost::json::value res = boost::json::object();
         res.as_object()["status"] = "error";
-        res.as_object()["message"] = "Invalid Field Types!";
+        res.as_object()["message"] = "Invalid Fields Type!";
         
         response.body() = boost::json::serialize(res);
         co_return;
     }
-    if(reqBody.get_object().at("username").get_string() == "" || reqBody.get_object().at("password").get_string() == "" || reqBody.get_object().at("email").get_string() == ""){
+    if(username.get_string().empty() || password.get_string().empty() || email.get_string().empty()){
         response.result(boost::beast::http::status::unprocessable_entity);
         response.set(boost::beast::http::field::content_type,"application/json");
     
@@ -51,11 +55,47 @@ boost::asio::awaitable<void> UserHandler::createUser(HttpRequest &&request, Http
         co_return;
     }
     
+    int err = co_await UserModel::createUser(username.get_string().c_str(),password.get_string().c_str(),email.get_string().c_str());
+    if(err == 1){
+        response.result(boost::beast::http::status::ok);
+        response.set(boost::beast::http::field::content_type,"application/json");
+    
+        boost::json::value res = boost::json::object();
+        res.as_object()["status"] = "error";
+        res.as_object()["message"] = "Username or Email already exists!";
+        
+        response.body() = boost::json::serialize(res);
+        co_return;
+    }
+
     response.result(boost::beast::http::status::ok);
     response.set(boost::beast::http::field::content_type,"application/json");
     boost::json::value res = boost::json::object();
     res.as_object()["status"] = "success";
     res.as_object()["message"] = "User Created Successfully!";
     response.body() = boost::json::serialize(res);
+    co_return;
+}
+
+boost::asio::awaitable<void> UserHandler::getUserByUUID(HttpRequest &&request, HttpResponse &response,const RequestParams &requestParams){
+
+    UserModel::User u = co_await UserModel::getUserByUUID(requestParams.at("pathParams").at("uu_id"));
+
+    if(u.uu_id.empty()){
+        response.result(boost::beast::http::status::ok);
+        response.set(boost::beast::http::field::content_type,"application/json");
+        boost::json::value res = boost::json::object();
+        res.as_object()["status"] = "error";
+        res.as_object()["message"] = "User Not Found!";
+        response.body() = boost::json::serialize(res);
+    } else {
+        response.result(boost::beast::http::status::ok);
+        response.set(boost::beast::http::field::content_type,"application/json");
+        boost::json::value res = boost::json::object();
+        res.as_object()["status"] = "success";
+        res.as_object()["user"] = boost::json::value_from<UserModel::User&>(u);
+        response.body() = boost::json::serialize(res);
+    }
+    
     co_return;
 }

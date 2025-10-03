@@ -24,5 +24,7 @@ int main() {
 
     ioContext.run();
 
+    DBClient::getInstance()->disconnect();
+
     return EXIT_SUCCESS;
 }

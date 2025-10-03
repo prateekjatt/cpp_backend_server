@@ -3,7 +3,9 @@
 
 DBClient *DBClient::dbClient = nullptr;
 
-DBClient::DBClient(boost::asio::io_context &ioContext):conn(ioContext){
+DBClient::DBClient(boost::asio::io_context &ioContext){
+
+    conn = std::make_shared<boost::mysql::any_connection>(ioContext);
 
     logger = Logger::getInstance();
 
@@ -40,19 +42,17 @@ void DBClient::connect(){
     params.username = username;
     params.password = password;
     params.database = database;
-    conn.connect(params);
+    conn->connect(params);
 
     logger->log(LogType::INFO,"Database Connected Successfully");
 }
 
-boost::asio::awaitable<boost::mysql::results> DBClient::execute(const std::string &query){
-    boost::mysql::results result;
-    co_await conn.async_execute(query,result,boost::asio::use_awaitable);
-    co_return result;
+std::shared_ptr<boost::mysql::any_connection> DBClient::getConnection(){
+    return dbClient->conn;
 }
 
 void DBClient::disconnect(){
-    conn.close();
+    conn->close();
 }
 
 DBClient::~DBClient(){
