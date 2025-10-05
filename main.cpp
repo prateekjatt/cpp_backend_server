@@ -2,6 +2,7 @@
 #include "utils/configuration_manager.h"
 #include "utils/logger.h"
 #include "db_client/db_client.h"
+#include <sodium.h>
 
 int main() {
     boost::asio::io_context ioContext;
@@ -14,6 +15,11 @@ int main() {
     std::string port = ConfigurationManager::get("SERVER_PORT");
     if(hostname.empty() || port.empty()){
         logger->log(LogType::ERROR,"Unable to find required configuration variables for server!");
+        std::exit(EXIT_FAILURE);
+    }
+    
+    if(sodium_init() < 0){
+        logger->log(LogType::ERROR,"Unable to Initilization Sodium!");
         std::exit(EXIT_FAILURE);
     }
     

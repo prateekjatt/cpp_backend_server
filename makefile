@@ -1,6 +1,6 @@
 CXX := g++ -std=c++20 -fcoroutines
-INC_FLAGS := -Idependencies/boost-1.88.0_build/include
-LD_FLAGS := -Ldependencies/boost-1.88.0_build/lib -lpthread -lssl -lcrypto -Wl,-Bstatic -lboost_json -lboost_charconv -lboost_url -lquadmath -Wl,-Bdynamic
+INC_FLAGS := -Idependencies/boost-1.88.0_build/include -Idependencies/libsodium-stable/src/libsodium/include
+LD_FLAGS := -Ldependencies/boost-1.88.0_build/lib -Ldependencies/libsodium-stable/src/libsodium/.libs -lpthread -lssl -lcrypto -Wl,-Bstatic -lboost_json -lboost_charconv -lboost_url -lquadmath -lsodium -Wl,-Bdynamic
 SRC_FILES := $(shell find ./handlers ./server ./db_client ./utils ./models main.cpp -name '*.cpp')
 OBJ_FILES := $(SRC_FILES:%.cpp=./build/%.o)
 

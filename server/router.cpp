@@ -82,6 +82,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> Router::handleRequ
         res.as_object()["message"] = "Internal Server Error!";
         response.body() = boost::json::serialize(res);
         response.prepare_payload();    
+    } catch(...){
+        logger->log(LogType::ERROR,std::string("Internal Server Error: "));
+        
+        response.result(boost::beast::http::status::internal_server_error);
+        response.set(boost::beast::http::field::content_type,"application/json");
+        
+        boost::json::value res = boost::json::object();
+        res.as_object()["status"] = "error";
+        res.as_object()["message"] = "Internal Server Error!";
+        response.body() = boost::json::serialize(res);
+        response.prepare_payload();    
     }
 
     logger->log(LogType::INFO, std::string(request.method_string()) + " " + std::string(request.target()) + 

@@ -9,6 +9,7 @@
 
 namespace UserHandler{
     boost::asio::awaitable<void> createUser(HttpRequest &&request, HttpResponse &response,const RequestParams &requestParams);
+    boost::asio::awaitable<void> authenticateUser(HttpRequest &&request, HttpResponse &response,const RequestParams &requestParams);
     boost::asio::awaitable<void> getUserByUUID(HttpRequest &&request, HttpResponse &response,const RequestParams &requestParams);
 };
 
