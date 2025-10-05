@@ -12,6 +12,7 @@ Building a web server written in C++ using Boost Libraries for linux
     - Beast
     - JSON
     - MySQL
+- [libsodium](https://github.com/jedisct1/libsodium)
 
 ### Building Instructions:
 1. Clone this repository
@@ -22,5 +23,5 @@ $ make
 
 ### Running Server:
 ```sh
-$ ./build/main
+$ ./build/backend_server
 ```
