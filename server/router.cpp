@@ -3,13 +3,13 @@
 
 Router::Router(){
     logger = Logger::getInstance();
+
+    logger->log(LogType::DEBUG,"Initializing Router");
+
     for(const auto &route:routes){
-        const auto parsedRoute = boost::urls::parse_origin_form(boost::urls::encode(route.path,boost::urls::unreserved_chars+"/"));  
-        if(parsedRoute.has_error()){
-            logger->log(LogType::ERROR,"Invalid Route Found: " + route.path);
-            exit(EXIT_FAILURE);
-        }
-        const auto parsedSeg = parsedRoute.value().segments();
+        boost::urls::url url;
+        url.set_path(route.path);
+        const auto parsedSeg = url.segments();
         std::vector<std::string> segs;
         std::copy(parsedSeg.begin(),parsedSeg.end(),std::back_inserter(segs));
         segementedRoutes.push_back({segs,route.methodHandlers});
@@ -34,7 +34,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> Router::handleRequ
             response.prepare_payload();
             co_return response;
         }
-        
+
         std::vector<std::pair<std::string,std::string>> pathParams;
         RouteHandler handler = nullptr;
         bool anyRouteMatched = findRouteByPath(parsed_url.value().segments(),request.method(),pathParams,handler);
@@ -109,23 +109,24 @@ bool Router::findRouteByPath(const boost::urls::segments_view &path,const boost:
 
         bool matched = true;
         auto pathIt = path.begin();
-        std::for_each(route.path.begin(),route.path.end(),[&](const std::string &seg){
-            if(seg[0] != '{' && seg != (*pathIt)){
+        for(const auto &routeSeg: route.path){
+            if(routeSeg[0] != '{' && routeSeg != (*pathIt)){
                 matched = false; 
-                return;
+                break;
             }
-            if(seg[0] == '{'){
-                pathParams.push_back(std::make_pair(seg.substr(1,seg.size()-2),(*pathIt)));
+            if(routeSeg[0] == '{'){
+                pathParams.push_back(std::make_pair(routeSeg.substr(1,routeSeg.size()-2),(*pathIt)));
             }
-        });
+            pathIt++;
+        };
         
         if(matched){
             anyRouteMatched = true;
             
             if(route.methodHandlers.contains(method)){
                 handler = route.methodHandlers.at(method);
-                break;
             }
+            break;
         }
     }
 

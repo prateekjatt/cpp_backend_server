@@ -30,6 +30,10 @@ Logger* Logger::getInstance(){
 }
 
 void Logger::log(const LogType &logType,const std::string &message){
+    if(logType == LogType::DEBUG && ConfigurationManager::get("ENABLE_DEBUG_LOGS") != "1") {
+        return;
+    } 
+
     char timestamp[200];
     time_t time = std::time(NULL);
     struct std::tm *tm_st = std::gmtime(&time);

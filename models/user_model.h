@@ -20,7 +20,8 @@ namespace UserModel {
     boost::asio::awaitable<User> getUserByUUID(const std::string &uuid);
     boost::asio::awaitable<void> createUser(const std::string &username, const std::string &password, const std::string &email);
     boost::asio::awaitable<bool> authenticateUser(const std::string &username, const std::string &password, const std::string &email);
-    boost::asio::awaitable<bool> checkIfUserAlreadyExists(const std::string &username, const std::string &email);
+    boost::asio::awaitable<bool> checkIfUsernameAlreadyExists(const std::string &username);
+    boost::asio::awaitable<bool> checkIfEmailAlreadyExists(const std::string &email);
     void tag_invoke(const boost::json::value_from_tag&, boost::json::value& jv, const User &user);
 };
 

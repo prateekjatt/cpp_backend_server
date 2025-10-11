@@ -49,10 +49,16 @@ boost::asio::awaitable<bool> UserModel::authenticateUser(const std::string &user
     co_return res == 0;
 }
 
-boost::asio::awaitable<bool> UserModel::checkIfUserAlreadyExists(const std::string &username, const std::string &email){
+boost::asio::awaitable<bool> UserModel::checkIfUsernameAlreadyExists(const std::string &username){
     boost::mysql::results result;
-    co_await DBClient::getConnection()->async_execute(boost::mysql::with_params("select username,email from users where username={0} or email={1}",username,email),result,boost::asio::use_awaitable);
-    co_return result.rows().size();
+    co_await DBClient::getConnection()->async_execute(boost::mysql::with_params("select count(*) from users where username={0}",username),result,boost::asio::use_awaitable);
+    co_return result.rows().at(0).at(0).as_int64() > 0;
+}
+
+boost::asio::awaitable<bool> UserModel::checkIfEmailAlreadyExists(const std::string &email){
+    boost::mysql::results result;
+    co_await DBClient::getConnection()->async_execute(boost::mysql::with_params("select count(*) from users where email={0}",email),result,boost::asio::use_awaitable);
+    co_return result.rows().at(0).at(0).as_int64() > 0;
 }
 
 void UserModel::tag_invoke(const boost::json::value_from_tag&, boost::json::value& jv, const User &user){

@@ -1,7 +1,7 @@
 #include "user_handler.h"
 #include "../models/user_model.h"
 
-boost::asio::awaitable<void> UserHandler::createUser(HttpRequest &&request, HttpResponse &response,const RequestParams &requestParams){
+boost::asio::awaitable<void> UserHandler::registerUser(HttpRequest &&request, HttpResponse &response,const RequestParams &requestParams){
     
     boost::system::error_code ec;
     boost::json::value reqBody = boost::json::parse(request.body(),ec);
@@ -55,8 +55,9 @@ boost::asio::awaitable<void> UserHandler::createUser(HttpRequest &&request, Http
         co_return;
     }
 
-    bool userAlreadyExists = co_await UserModel::checkIfUserAlreadyExists(username.get_string().c_str(),email.get_string().c_str());
-    if(userAlreadyExists){
+    bool usernameAlreadyExists = co_await UserModel::checkIfUsernameAlreadyExists(username.get_string().c_str());
+    bool emailAlreadyExists = co_await UserModel::checkIfEmailAlreadyExists(email.get_string().c_str());
+    if(usernameAlreadyExists || emailAlreadyExists){
         response.result(boost::beast::http::status::ok);
         response.set(boost::beast::http::field::content_type,"application/json");
     
@@ -79,7 +80,7 @@ boost::asio::awaitable<void> UserHandler::createUser(HttpRequest &&request, Http
     co_return;
 }
 
-boost::asio::awaitable<void> UserHandler::authenticateUser(HttpRequest &&request, HttpResponse &response,const RequestParams &requestParams){
+boost::asio::awaitable<void> UserHandler::loginUser(HttpRequest &&request, HttpResponse &response,const RequestParams &requestParams){
     
     boost::system::error_code ec;
     boost::json::value reqBody = boost::json::parse(request.body(),ec);

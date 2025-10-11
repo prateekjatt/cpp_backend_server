@@ -12,8 +12,8 @@ struct Route{
 };
 
 static std::vector<Route> routes = {
-    {"/users/signup",{ {boost::beast::http::verb::post, UserHandler::createUser} }},
-    {"/users/signin",{ {boost::beast::http::verb::post, UserHandler::authenticateUser} }},
+    {"/users/signup",{ {boost::beast::http::verb::post, UserHandler::registerUser} }},
+    {"/users/login",{ {boost::beast::http::verb::post, UserHandler::loginUser} }},
     {"/users/{uu_id}",{ {boost::beast::http::verb::get, UserHandler::getUserByUUID} }},
 };
 

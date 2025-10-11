@@ -10,7 +10,9 @@ int main() {
     ConfigurationManager::loadFromFile("server.config");
 
     Logger *logger = Logger::getInstance();
-    
+
+    logger->log(LogType::DEBUG,"Configuration File Loaded");
+
     std::string hostname = ConfigurationManager::get("SERVER_HOSTNAME");
     std::string port = ConfigurationManager::get("SERVER_PORT");
     if(hostname.empty() || port.empty()){
