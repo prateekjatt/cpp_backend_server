@@ -11,6 +11,9 @@ namespace UserHandler{
     boost::asio::awaitable<void> registerUser(HttpRequest &&request, HttpResponse &response,const RequestParams &requestParams);
     boost::asio::awaitable<void> loginUser(HttpRequest &&request, HttpResponse &response,const RequestParams &requestParams);
     boost::asio::awaitable<void> getUserByUUID(HttpRequest &&request, HttpResponse &response,const RequestParams &requestParams);
+    boost::asio::awaitable<void> sendVerificationCode(HttpRequest &&request, HttpResponse &response,const RequestParams &requestParams);
+    boost::asio::awaitable<void> checkIfUsernameExists(HttpRequest &&request, HttpResponse &response,const RequestParams &requestParams);
+    boost::asio::awaitable<void> checkIfEmailExists(HttpRequest &&request, HttpResponse &response,const RequestParams &requestParams);
 };
 
 #endif

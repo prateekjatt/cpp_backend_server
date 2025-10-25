@@ -3,6 +3,8 @@
 #include "utils/logger.h"
 #include "db_client/db_client.h"
 #include <sodium.h>
+#include "utils/cache_storage.h"
+#include <boost/redis/src.hpp>
 
 int main() {
     boost::asio::io_context ioContext;
@@ -29,6 +31,8 @@ int main() {
     
     DBClient::createInstance(ioContext);
     DBClient::getInstance()->connect();
+
+    CacheStorage::createInstance(ioContext);
 
     ioContext.run();
 
