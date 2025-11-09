@@ -1,8 +1,10 @@
 #include "user_handler.h"
 #include "../models/user_model.h"
 #include "../utils/cache_storage.h"
+#include "../utils/email_service.h"
 
-boost::asio::awaitable<void> UserHandler::registerUser(HttpRequest &&request, HttpResponse &response,const RequestParams &requestParams){
+boost::asio::awaitable<void> UserHandler::registerUser(HttpRequest &&request, HttpResponse &response,
+    const RequestParams &requestParams){
     
     boost::system::error_code ec;
     boost::json::value reqBody = boost::json::parse(request.body(),ec);
@@ -18,7 +20,9 @@ boost::asio::awaitable<void> UserHandler::registerUser(HttpRequest &&request, Ht
         co_return;
     }
     
-    if(!reqBody.get_object().contains("username") || !reqBody.get_object().contains("password") || !reqBody.get_object().contains("email") || !reqBody.get_object().contains("verificationCode")){
+    if(!reqBody.get_object().contains("username") || !reqBody.get_object().contains("password") || 
+    !reqBody.get_object().contains("email") || 
+    !reqBody.get_object().contains("verificationCode")){
         response.result(boost::beast::http::status::unprocessable_entity);
         response.set(boost::beast::http::field::content_type,"application/json");
     
@@ -45,7 +49,8 @@ boost::asio::awaitable<void> UserHandler::registerUser(HttpRequest &&request, Ht
         response.body() = boost::json::serialize(res);
         co_return;
     }
-    if(username.get_string().empty() || password.get_string().empty() || email.get_string().empty() || verificationCode.get_string().empty()){
+    if(username.get_string().empty() || password.get_string().empty() || email.get_string().empty() || 
+    verificationCode.get_string().empty()){
         response.result(boost::beast::http::status::unprocessable_entity);
         response.set(boost::beast::http::field::content_type,"application/json");
     
@@ -92,6 +97,12 @@ boost::asio::awaitable<void> UserHandler::registerUser(HttpRequest &&request, Ht
 
     co_await UserModel::createUser(username.get_string().c_str(),password.get_string().c_str(),email.get_string().c_str());
 
+    co_await EmailService::sendEmail(email.get_string().c_str(), "Welcome!",
+    "Hi "+std::string(username.get_string())+",\n\n"
+    "Welcome! We're so glad you've joined us.\n"
+    "We will keep you updated about development.\n"
+    +"\nTeam");
+
     response.result(boost::beast::http::status::ok);
     response.set(boost::beast::http::field::content_type,"application/json");
     boost::json::value res = boost::json::object();
@@ -101,7 +112,8 @@ boost::asio::awaitable<void> UserHandler::registerUser(HttpRequest &&request, Ht
     co_return;
 }
 
-boost::asio::awaitable<void> UserHandler::loginUser(HttpRequest &&request, HttpResponse &response,const RequestParams &requestParams){
+boost::asio::awaitable<void> UserHandler::loginUser(HttpRequest &&request, HttpResponse &response,
+    const RequestParams &requestParams){
     
     boost::system::error_code ec;
     boost::json::value reqBody = boost::json::parse(request.body(),ec);
@@ -117,7 +129,8 @@ boost::asio::awaitable<void> UserHandler::loginUser(HttpRequest &&request, HttpR
         co_return;
     }
     
-    if(!reqBody.get_object().contains("usernameEmail") || !reqBody.get_object().contains("password")){
+    if((!reqBody.get_object().contains("username") && !reqBody.get_object().contains("email")) || 
+    !reqBody.get_object().contains("password")){
         response.result(boost::beast::http::status::unprocessable_entity);
         response.set(boost::beast::http::field::content_type,"application/json");
     
@@ -129,33 +142,62 @@ boost::asio::awaitable<void> UserHandler::loginUser(HttpRequest &&request, HttpR
         co_return;
     }
 
-    const boost::json::value usernameEmail = reqBody.get_object().at("usernameEmail");
+
     const boost::json::value password = reqBody.get_object().at("password"); 
-    if(!usernameEmail.is_string() || !password.is_string()){
-        response.result(boost::beast::http::status::unprocessable_entity);
-        response.set(boost::beast::http::field::content_type,"application/json");
-    
-        boost::json::value res = boost::json::object();
-        res.as_object()["status"] = "error";
-        res.as_object()["message"] = "Invalid Fields Type!";
+    std::string usernameString = "";
+    if(reqBody.get_object().contains("username")){
+        const boost::json::value username = reqBody.get_object().at("username");
+        if(!username.is_string() || !password.is_string()){
+            response.result(boost::beast::http::status::unprocessable_entity);
+            response.set(boost::beast::http::field::content_type,"application/json");
         
-        response.body() = boost::json::serialize(res);
-        co_return;
+            boost::json::value res = boost::json::object();
+            res.as_object()["status"] = "error";
+            res.as_object()["message"] = "Invalid Fields Type!";
+            
+            response.body() = boost::json::serialize(res);
+            co_return;
+        }
+        usernameString = username.get_string();
     }
-    if(usernameEmail.get_string().empty() || password.get_string().empty()){
-        response.result(boost::beast::http::status::unprocessable_entity);
-        response.set(boost::beast::http::field::content_type,"application/json");
-    
-        boost::json::value res = boost::json::object();
-        res.as_object()["status"] = "error";
-        res.as_object()["message"] = "Required Fields cannot be empty!";
+    else {
+        const boost::json::value email = reqBody.get_object().at("email");
+        if(!email.is_string() || !password.is_string()){
+            response.result(boost::beast::http::status::unprocessable_entity);
+            response.set(boost::beast::http::field::content_type,"application/json");
         
-        response.body() = boost::json::serialize(res);
-        co_return;
+            boost::json::value res = boost::json::object();
+            res.as_object()["status"] = "error";
+            res.as_object()["message"] = "Invalid Fields Type!";
+            
+            response.body() = boost::json::serialize(res);
+            co_return;
+        }
+        UserModel::User user = co_await UserModel::getUserByEmail(email.get_string().c_str());
+        if(!user.username.empty()){
+            usernameString = user.username;
+        }
     }
-    
-    bool success = co_await UserModel::authenticateUser(usernameEmail.get_string().c_str(),password.get_string().c_str(),usernameEmail.get_string().c_str());
+
+    bool success = co_await UserModel::authenticateUser(usernameString,password.get_string().c_str());
     if(success) {
+        std::string authToken = "";
+        std::string alphabets = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        srand(time(NULL));
+        for(int i=0;i<128;i++){
+            authToken += alphabets[rand()%52];
+        }
+
+        co_await CacheStorage::getInstance()->set(authToken,usernameString,"86400");
+        char expiry[200];
+        time_t time = std::time(NULL);
+        struct std::tm *tm_st = std::gmtime(&time);
+        tm_st->tm_mday+=1;
+        std::mktime(tm_st);
+        strftime(expiry,sizeof(expiry),"%a, %d %b %Y %X GMT",tm_st);
+        
+        response.set(boost::beast::http::field::set_cookie,"Authentication="+authToken+";expires="+expiry+";secure;");
+
         response.result(boost::beast::http::status::ok);
         response.set(boost::beast::http::field::content_type,"application/json");
         boost::json::value res = boost::json::object();
@@ -173,7 +215,8 @@ boost::asio::awaitable<void> UserHandler::loginUser(HttpRequest &&request, HttpR
     co_return;
 }
 
-boost::asio::awaitable<void> UserHandler::getUserByUUID(HttpRequest &&request, HttpResponse &response,const RequestParams &requestParams){
+boost::asio::awaitable<void> UserHandler::getUserByUUID(HttpRequest &&request, HttpResponse &response,
+    const RequestParams &requestParams){
 
     UserModel::User u = co_await UserModel::getUserByUUID(requestParams.at("pathParams").at("uu_id"));
 
@@ -196,7 +239,8 @@ boost::asio::awaitable<void> UserHandler::getUserByUUID(HttpRequest &&request, H
     co_return;
 }
 
-boost::asio::awaitable<void> UserHandler::checkIfUsernameExists(HttpRequest &&request, HttpResponse &response,const RequestParams &requestParams){
+boost::asio::awaitable<void> UserHandler::checkIfUsernameExists(HttpRequest &&request, HttpResponse &response,
+    const RequestParams &requestParams){
 
     bool usernameExists = co_await UserModel::checkIfUsernameAlreadyExists(requestParams.at("pathParams").at("username"));
 
@@ -209,7 +253,8 @@ boost::asio::awaitable<void> UserHandler::checkIfUsernameExists(HttpRequest &&re
     co_return;
 }
 
-boost::asio::awaitable<void> UserHandler::checkIfEmailExists(HttpRequest &&request, HttpResponse &response,const RequestParams &requestParams){
+boost::asio::awaitable<void> UserHandler::checkIfEmailExists(HttpRequest &&request, HttpResponse &response,
+    const RequestParams &requestParams){
 
     bool emailExists = co_await UserModel::checkIfEmailAlreadyExists(requestParams.at("pathParams").at("email"));
 
@@ -222,7 +267,8 @@ boost::asio::awaitable<void> UserHandler::checkIfEmailExists(HttpRequest &&reque
     co_return;
 }
 
-boost::asio::awaitable<void> UserHandler::sendVerificationCode(HttpRequest &&request, HttpResponse &response,const RequestParams &requestParams){
+boost::asio::awaitable<void> UserHandler::sendVerificationCode(HttpRequest &&request, HttpResponse &response,
+    const RequestParams &requestParams){
     
     boost::system::error_code ec;
     boost::json::value reqBody = boost::json::parse(request.body(),ec);
@@ -262,15 +308,18 @@ boost::asio::awaitable<void> UserHandler::sendVerificationCode(HttpRequest &&req
         co_return;
     }
     
-    
     std::string otp = "";
+    srand(time(NULL));
     for(int i=0;i<6;i++){
         otp += std::to_string(rand()%10);
     }
 
-    co_await CacheStorage::getInstance()->set(std::string("otp:")+email.as_string().c_str(),otp,"36000");
+    co_await CacheStorage::getInstance()->set(std::string("otp:")+email.as_string().c_str(),otp,"1800");
 
-    // TODO: Implement Email Service
+    co_await EmailService::sendEmail(email.as_string().c_str(), "OTP for Signup","Your OTP for creating new account is "
+    +otp+
+    "\nOTP will be valid for 10 minutes"
+    "\n\nTeam");
 
     response.result(boost::beast::http::status::ok);
     response.set(boost::beast::http::field::content_type,"application/json");

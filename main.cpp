@@ -5,9 +5,9 @@
 #include <sodium.h>
 #include "utils/cache_storage.h"
 #include <boost/redis/src.hpp>
+#include "utils/globals.h"
 
 int main() {
-    boost::asio::io_context ioContext;
     
     ConfigurationManager::loadFromFile("server.config");
 
@@ -27,14 +27,13 @@ int main() {
         std::exit(EXIT_FAILURE);
     }
     
-    std::make_shared<AppServer>(ioContext,hostname,std::atoi(port.c_str()))->start();
-    
-    DBClient::createInstance(ioContext);
+    CacheStorage::getInstance();
     DBClient::getInstance()->connect();
+    
+    std::make_shared<AppServer>(Globals::ioContext,hostname,std::atoi(port.c_str()))->start();
+    
 
-    CacheStorage::createInstance(ioContext);
-
-    ioContext.run();
+    Globals::ioContext.run();
 
     DBClient::getInstance()->disconnect();
 

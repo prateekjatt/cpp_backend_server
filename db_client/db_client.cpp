@@ -1,11 +1,12 @@
 #include "db_client.h"
 #include "../utils/configuration_manager.h"
+#include "../utils/globals.h"
 
 DBClient *DBClient::dbClient = nullptr;
 
-DBClient::DBClient(boost::asio::io_context &ioContext){
+DBClient::DBClient(){
 
-    conn = std::make_shared<boost::mysql::any_connection>(ioContext);
+    conn = std::make_shared<boost::mysql::any_connection>(Globals::ioContext);
 
     logger = Logger::getInstance();
 
@@ -26,13 +27,10 @@ DBClient::DBClient(boost::asio::io_context &ioContext){
     this->database = database;
 }
 
-void DBClient::createInstance(boost::asio::io_context &ioContext){
-    if(dbClient == nullptr){
-        dbClient = new DBClient(ioContext);
-    }
-}
-
 DBClient* DBClient::getInstance(){
+    if(dbClient == nullptr){
+        dbClient = new DBClient();
+    }
     return dbClient;
 }
 

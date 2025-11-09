@@ -1,10 +1,11 @@
 #include "./cache_storage.h"
 #include "./configuration_manager.h"
 #include "./logger.h"
+#include "globals.h"
 
 CacheStorage *CacheStorage::cacheStorage = nullptr;
 
-CacheStorage::CacheStorage(boost::asio::io_context &ioContext):conn(ioContext){
+CacheStorage::CacheStorage():conn(Globals::ioContext){
     const auto logger = Logger::getInstance();
 
     const std::string hostname = ConfigurationManager::get("CACHE_SERVER_HOSTNAME");
@@ -21,13 +22,10 @@ CacheStorage::CacheStorage(boost::asio::io_context &ioContext):conn(ioContext){
     conn.async_run(config,boost::redis::logger{boost::redis::logger::level::disabled},boost::asio::detached);
 }
 
-void CacheStorage::createInstance(boost::asio::io_context &ioContext){
-    if(cacheStorage == nullptr){
-        cacheStorage = new CacheStorage(ioContext);
-    }
-}
-
 CacheStorage* CacheStorage::getInstance(){
+    if(cacheStorage == nullptr){
+        cacheStorage = new CacheStorage();
+    }
     return cacheStorage;
 }
 

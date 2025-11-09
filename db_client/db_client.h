@@ -15,9 +15,8 @@ private:
     std::shared_ptr<boost::mysql::any_connection> conn;
     Logger *logger;
     static DBClient *dbClient;
-    DBClient(boost::asio::io_context &ioContext);
+    DBClient();
 public:
-    static void createInstance(boost::asio::io_context &ioContext);
     static DBClient* getInstance();
     static std::shared_ptr<boost::mysql::any_connection> getConnection();
     void connect();
