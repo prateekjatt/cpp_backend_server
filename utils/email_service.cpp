@@ -34,12 +34,7 @@ boost::asio::awaitable<int> EmailService::sendEmail(const std::string toEmail, c
     
     co_await boost::asio::async_write(ssl_stream,boost::asio::buffer(msg),boost::asio::use_awaitable);
     
-    boost::asio::streambuf response;
     boost::system::error_code ec;
-    boost::asio::read_until(ssl_stream, response, "\r\n\r\n", ec);
-    
-    Logger::getInstance()->log(LogType::DEBUG,(char*)response.data().data());
-
     ssl_stream.shutdown(ec);
 
     co_return 0;

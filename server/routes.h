@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include "../handlers/type_alias.h"
 #include "../handlers/user_handler.h"
+#include "../handlers/middlewares.h"
 
 struct Route{
     std::string path; 
@@ -12,10 +13,11 @@ struct Route{
 };
 
 static std::vector<Route> routes = {
+    {"/users",{ {boost::beast::http::verb::get, Middlewares::authenticateRequest(UserHandler::getCurrentUser)} }},
     {"/users/signup",{ {boost::beast::http::verb::post, UserHandler::registerUser} }},
     {"/users/login",{ {boost::beast::http::verb::post, UserHandler::loginUser} }},
+    {"/users/logout",{ {boost::beast::http::verb::get, UserHandler::logoutUser} }},
     {"/users/sendVerificationCode",{ {boost::beast::http::verb::post, UserHandler::sendVerificationCode} }},
-    {"/users/{uu_id}",{ {boost::beast::http::verb::get, UserHandler::getUserByUUID} }},
     {"/users/checkUsername/{username}",{ {boost::beast::http::verb::get, UserHandler::checkIfUsernameExists} }},
     {"/users/checkEmail/{email}",{ {boost::beast::http::verb::get, UserHandler::checkIfEmailExists} }},
 };

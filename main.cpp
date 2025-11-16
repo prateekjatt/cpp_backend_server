@@ -28,11 +28,16 @@ int main() {
     }
     
     CacheStorage::getInstance();
-    DBClient::getInstance()->connect();
+    DBClient::getInstance();
     
     std::make_shared<AppServer>(Globals::ioContext,hostname,std::atoi(port.c_str()))->start();
-    
 
+    boost::asio::signal_set signals{Globals::ioContext, SIGINT, SIGTERM};
+
+    signals.async_wait([&](boost::system::error_code, int) {
+        Globals::ioContext.stop();
+    });
+    
     Globals::ioContext.run();
 
     DBClient::getInstance()->disconnect();

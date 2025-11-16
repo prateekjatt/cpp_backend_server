@@ -7,19 +7,13 @@
 
 class DBClient{
 private:
-    std::string hostname;
-    uint16_t port;
-    std::string username;
-    std::string password;
-    std::string database;
-    std::shared_ptr<boost::mysql::any_connection> conn;
+    boost::mysql::connection_pool conn_pool;
     Logger *logger;
     static DBClient *dbClient;
     DBClient();
 public:
     static DBClient* getInstance();
-    static std::shared_ptr<boost::mysql::any_connection> getConnection();
-    void connect();
+    static boost::asio::awaitable<boost::mysql::pooled_connection> getConnection();
     void disconnect();
     ~DBClient();
 };

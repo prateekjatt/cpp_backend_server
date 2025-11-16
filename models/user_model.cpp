@@ -6,7 +6,7 @@
 
 boost::asio::awaitable<UserModel::User> UserModel::getUserByUUID(const std::string &uuid){
     boost::mysql::results result;
-    co_await DBClient::getConnection()->async_execute(boost::mysql::with_params("select uu_id,username,password_hash,email,created_at,updated_at from users where uu_id={}",uuid),result,boost::asio::use_awaitable);
+    co_await (co_await DBClient::getConnection())->async_execute(boost::mysql::with_params("select uu_id,username,password_hash,email,created_at,updated_at from users where uu_id={}",uuid),result,boost::asio::use_awaitable);
     UserModel::User u;
     if(result.rows().size()){
         u.uu_id = result.rows()[0][0].as_string();
@@ -23,7 +23,7 @@ boost::asio::awaitable<UserModel::User> UserModel::getUserByUUID(const std::stri
 
 boost::asio::awaitable<UserModel::User> UserModel::getUserByEmail(const std::string &email){
     boost::mysql::results result;
-    co_await DBClient::getConnection()->async_execute(boost::mysql::with_params("select uu_id,username,password_hash,email,created_at,updated_at from users where email={}",email),result,boost::asio::use_awaitable);
+    co_await (co_await DBClient::getConnection())->async_execute(boost::mysql::with_params("select uu_id,username,password_hash,email,created_at,updated_at from users where email={}",email),result,boost::asio::use_awaitable);
     UserModel::User u;
     if(result.rows().size()){
         u.uu_id = result.rows()[0][0].as_string();
@@ -40,7 +40,7 @@ boost::asio::awaitable<UserModel::User> UserModel::getUserByEmail(const std::str
 
 boost::asio::awaitable<UserModel::User> UserModel::getUserByUsername(const std::string &username){
     boost::mysql::results result;
-    co_await DBClient::getConnection()->async_execute(boost::mysql::with_params("select uu_id,username,password_hash,email,created_at,updated_at from users where username={}",username),result,boost::asio::use_awaitable);
+    co_await (co_await DBClient::getConnection())->async_execute(boost::mysql::with_params("select uu_id,username,password_hash,email,created_at,updated_at from users where username={}",username),result,boost::asio::use_awaitable);
     UserModel::User u;
     if(result.rows().size()){
         u.uu_id = result.rows()[0][0].as_string();
@@ -65,14 +65,14 @@ boost::asio::awaitable<void> UserModel::createUser(const std::string &username, 
     boost::mysql::datetime createdAt = boost::mysql::datetime::now();
 
     boost::mysql::results result;
-    co_await DBClient::getConnection()->async_execute(boost::mysql::with_params("insert into users values (UUID(),{0},{1},{2},{3},{4})",username,email,password_hash,createdAt,createdAt),result,boost::asio::use_awaitable);
+    co_await (co_await DBClient::getConnection())->async_execute(boost::mysql::with_params("insert into users values (UUID(),{0},{1},{2},{3},{4})",username,email,password_hash,createdAt,createdAt),result,boost::asio::use_awaitable);
     
     co_return;
 }
 
 boost::asio::awaitable<bool> UserModel::authenticateUser(const std::string &username, const std::string &password){
     boost::mysql::results result;
-    co_await DBClient::getConnection()->async_execute(boost::mysql::with_params("select password_hash from users where username={0}",username),result,boost::asio::use_awaitable);
+    co_await (co_await DBClient::getConnection())->async_execute(boost::mysql::with_params("select password_hash from users where username={0}",username),result,boost::asio::use_awaitable);
     std::string hashed_password = "";
     if(result.rows().size()){
         hashed_password = result.rows().at(0).at(0).as_string();
@@ -84,13 +84,13 @@ boost::asio::awaitable<bool> UserModel::authenticateUser(const std::string &user
 
 boost::asio::awaitable<bool> UserModel::checkIfUsernameAlreadyExists(const std::string &username){
     boost::mysql::results result;
-    co_await DBClient::getConnection()->async_execute(boost::mysql::with_params("select count(*) from users where username={0}",username),result,boost::asio::use_awaitable);
+    co_await (co_await DBClient::getConnection())->async_execute(boost::mysql::with_params("select count(*) from users where username={0}",username),result,boost::asio::use_awaitable);
     co_return result.rows().at(0).at(0).as_int64() > 0;
 }
 
 boost::asio::awaitable<bool> UserModel::checkIfEmailAlreadyExists(const std::string &email){
     boost::mysql::results result;
-    co_await DBClient::getConnection()->async_execute(boost::mysql::with_params("select count(*) from users where email={0}",email),result,boost::asio::use_awaitable);
+    co_await (co_await DBClient::getConnection())->async_execute(boost::mysql::with_params("select count(*) from users where email={0}",email),result,boost::asio::use_awaitable);
     co_return result.rows().at(0).at(0).as_int64() > 0;
 }
 

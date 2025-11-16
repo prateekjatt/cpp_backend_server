@@ -2,9 +2,10 @@
 #include "../models/user_model.h"
 #include "../utils/cache_storage.h"
 #include "../utils/email_service.h"
+#include "../utils/logger.h"
+#include "../utils/utilities.h"
 
-boost::asio::awaitable<void> UserHandler::registerUser(HttpRequest &&request, HttpResponse &response,
-    const RequestParams &requestParams){
+boost::asio::awaitable<void> UserHandler::registerUser(HttpRequest &&request, HttpResponse &response, const RequestParams &requestParams){
     
     boost::system::error_code ec;
     boost::json::value reqBody = boost::json::parse(request.body(),ec);
@@ -112,8 +113,7 @@ boost::asio::awaitable<void> UserHandler::registerUser(HttpRequest &&request, Ht
     co_return;
 }
 
-boost::asio::awaitable<void> UserHandler::loginUser(HttpRequest &&request, HttpResponse &response,
-    const RequestParams &requestParams){
+boost::asio::awaitable<void> UserHandler::loginUser(HttpRequest &&request, HttpResponse &response, const RequestParams &requestParams){
     
     boost::system::error_code ec;
     boost::json::value reqBody = boost::json::parse(request.body(),ec);
@@ -184,19 +184,13 @@ boost::asio::awaitable<void> UserHandler::loginUser(HttpRequest &&request, HttpR
         std::string authToken = "";
         std::string alphabets = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
         srand(time(NULL));
-        for(int i=0;i<128;i++){
+        for(int i=0;i<256;i++){
             authToken += alphabets[rand()%52];
         }
 
         co_await CacheStorage::getInstance()->set(authToken,usernameString,"86400");
-        char expiry[200];
-        time_t time = std::time(NULL);
-        struct std::tm *tm_st = std::gmtime(&time);
-        tm_st->tm_mday+=1;
-        std::mktime(tm_st);
-        strftime(expiry,sizeof(expiry),"%a, %d %b %Y %X GMT",tm_st);
         
-        response.set(boost::beast::http::field::set_cookie,"Authentication="+authToken+";expires="+expiry+";secure;");
+        response.set(boost::beast::http::field::set_cookie,"Authentication="+authToken+";Max-Age="+std::to_string(24*60*60)+";Secure;Path=/;HttpOnly;");
 
         response.result(boost::beast::http::status::ok);
         response.set(boost::beast::http::field::content_type,"application/json");
@@ -215,8 +209,26 @@ boost::asio::awaitable<void> UserHandler::loginUser(HttpRequest &&request, HttpR
     co_return;
 }
 
-boost::asio::awaitable<void> UserHandler::getUserByUUID(HttpRequest &&request, HttpResponse &response,
-    const RequestParams &requestParams){
+boost::asio::awaitable<void> UserHandler::logoutUser(HttpRequest &&request, HttpResponse &response, const RequestParams &requestParams){
+    std::unordered_map<std::string,std::string> cookies = Utilities::parseCookies(request.find(boost::beast::http::field::cookie) != request.end()? request.at(boost::beast::http::field::cookie):"");
+        
+    if(cookies.contains("Authentication")){
+        co_await CacheStorage::getInstance()->del(cookies.at("Authentication"));
+    }
+    
+    response.set(boost::beast::http::field::set_cookie,"Authentication=;Max-Age=0;Secure;Path=/;HttpOnly;");
+
+    response.result(boost::beast::http::status::ok);
+    response.set(boost::beast::http::field::content_type,"application/json");
+    boost::json::value res = boost::json::object();
+    res.as_object()["status"] = "success";
+    res.as_object()["message"] = "User Logged Out!";
+    response.body() = boost::json::serialize(res);
+
+    co_return;
+}
+
+boost::asio::awaitable<void> UserHandler::getUserByUUID(HttpRequest &&request, HttpResponse &response, const RequestParams &requestParams){
 
     UserModel::User u = co_await UserModel::getUserByUUID(requestParams.at("pathParams").at("uu_id"));
 
@@ -233,14 +245,41 @@ boost::asio::awaitable<void> UserHandler::getUserByUUID(HttpRequest &&request, H
         boost::json::value res = boost::json::object();
         res.as_object()["status"] = "success";
         res.as_object()["user"] = boost::json::value_from<UserModel::User&>(u);
+        res.as_object()["user"].as_object().erase("password_hash");
         response.body() = boost::json::serialize(res);
     }
     
     co_return;
 }
 
-boost::asio::awaitable<void> UserHandler::checkIfUsernameExists(HttpRequest &&request, HttpResponse &response,
-    const RequestParams &requestParams){
+boost::asio::awaitable<void> UserHandler::getCurrentUser(HttpRequest &&request, HttpResponse &response, const RequestParams &requestParams){
+
+    UserModel::User u = co_await UserModel::getUserByUsername(requestParams.at("additionalParams").at("username"));
+
+    if(u.uu_id.empty()){
+        response.result(boost::beast::http::status::ok);
+        response.set(boost::beast::http::field::content_type,"application/json");
+        boost::json::value res = boost::json::object();
+        res.as_object()["status"] = "error";
+        res.as_object()["message"] = "User Not Found!";
+        response.body() = boost::json::serialize(res);
+    } else {
+        response.result(boost::beast::http::status::ok);
+        response.set(boost::beast::http::field::content_type,"application/json");
+        boost::json::value res = boost::json::object();
+        res.as_object()["status"] = "success";
+        res.as_object()["user"] = boost::json::value_from<UserModel::User&>(u);
+        res.as_object()["user"].as_object().erase("password_hash");
+        res.as_object()["user"].as_object().erase("uu_id");
+        res.as_object()["user"].as_object().erase("created_at");
+        res.as_object()["user"].as_object().erase("updated_at");
+        response.body() = boost::json::serialize(res);
+    }
+    
+    co_return;
+}
+
+boost::asio::awaitable<void> UserHandler::checkIfUsernameExists(HttpRequest &&request, HttpResponse &response, const RequestParams &requestParams){
 
     bool usernameExists = co_await UserModel::checkIfUsernameAlreadyExists(requestParams.at("pathParams").at("username"));
 
@@ -253,8 +292,7 @@ boost::asio::awaitable<void> UserHandler::checkIfUsernameExists(HttpRequest &&re
     co_return;
 }
 
-boost::asio::awaitable<void> UserHandler::checkIfEmailExists(HttpRequest &&request, HttpResponse &response,
-    const RequestParams &requestParams){
+boost::asio::awaitable<void> UserHandler::checkIfEmailExists(HttpRequest &&request, HttpResponse &response, const RequestParams &requestParams){
 
     bool emailExists = co_await UserModel::checkIfEmailAlreadyExists(requestParams.at("pathParams").at("email"));
 
@@ -267,8 +305,7 @@ boost::asio::awaitable<void> UserHandler::checkIfEmailExists(HttpRequest &&reque
     co_return;
 }
 
-boost::asio::awaitable<void> UserHandler::sendVerificationCode(HttpRequest &&request, HttpResponse &response,
-    const RequestParams &requestParams){
+boost::asio::awaitable<void> UserHandler::sendVerificationCode(HttpRequest &&request, HttpResponse &response, const RequestParams &requestParams){
     
     boost::system::error_code ec;
     boost::json::value reqBody = boost::json::parse(request.body(),ec);

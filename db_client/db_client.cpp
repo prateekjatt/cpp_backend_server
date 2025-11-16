@@ -4,9 +4,7 @@
 
 DBClient *DBClient::dbClient = nullptr;
 
-DBClient::DBClient(){
-
-    conn = std::make_shared<boost::mysql::any_connection>(Globals::ioContext);
+DBClient::DBClient():conn_pool(Globals::ioContext,{}){
 
     logger = Logger::getInstance();
 
@@ -20,11 +18,14 @@ DBClient::DBClient(){
         logger->log(LogType::ERROR,"Unable to find required environment variables for database!");
         std::exit(EXIT_FAILURE);
     } 
-    this->hostname = hostname;
-    this->port = std::atoi(port.c_str());
-    this->username = username;
-    this->password = password;
-    this->database = database;
+
+    boost::mysql::pool_params params;
+    params.server_address.emplace_host_and_port(hostname,std::atoi(port.c_str()));
+    params.username = username;
+    params.password = password;
+    params.database = database;
+    conn_pool = boost::mysql::connection_pool(Globals::ioContext,std::move(params));
+    conn_pool.async_run(boost::asio::detached);
 }
 
 DBClient* DBClient::getInstance(){
@@ -34,23 +35,12 @@ DBClient* DBClient::getInstance(){
     return dbClient;
 }
 
-void DBClient::connect(){
-    boost::mysql::connect_params params;
-    params.server_address.emplace_host_and_port(hostname,port);
-    params.username = username;
-    params.password = password;
-    params.database = database;
-    conn->connect(params);
-
-    logger->log(LogType::INFO,"Database Connected Successfully");
-}
-
-std::shared_ptr<boost::mysql::any_connection> DBClient::getConnection(){
-    return dbClient->conn;
+boost::asio::awaitable<boost::mysql::pooled_connection> DBClient::getConnection(){
+    co_return co_await dbClient->conn_pool.async_get_connection(boost::asio::cancel_after(std::chrono::seconds(5)));
 }
 
 void DBClient::disconnect(){
-    conn->close();
+    conn_pool.cancel();
 }
 
 DBClient::~DBClient(){

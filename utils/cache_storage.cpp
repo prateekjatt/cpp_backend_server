@@ -19,7 +19,14 @@ CacheStorage::CacheStorage():conn(Globals::ioContext){
     config.addr.host = hostname;
     config.addr.port = port;
 
-    conn.async_run(config,boost::redis::logger{boost::redis::logger::level::disabled},boost::asio::detached);
+    conn.async_run(config,boost::redis::logger{boost::redis::logger::level::disabled},[logger](boost::system::error_code ec){
+        if(ec){
+            logger->log(LogType::ERROR,ec.what());
+            exit(EXIT_FAILURE);
+        } else {
+            logger->log(LogType::INFO,"Cache Server Connected Successfully!");
+        }
+    });
 }
 
 CacheStorage* CacheStorage::getInstance(){
