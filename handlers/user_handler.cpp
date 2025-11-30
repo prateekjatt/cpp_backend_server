@@ -98,11 +98,8 @@ boost::asio::awaitable<void> UserHandler::registerUser(HttpRequest &&request, Ht
 
     co_await UserModel::createUser(username.get_string().c_str(),password.get_string().c_str(),email.get_string().c_str());
 
-    co_await EmailService::sendEmail(email.get_string().c_str(), "Welcome!",
-    "Hi "+std::string(username.get_string())+",\n\n"
-    "Welcome! We're so glad you've joined us.\n"
-    "We will keep you updated about development.\n"
-    +"\nTeam");
+    std::unordered_map<std::string,std::string> emailData({{"username",username.get_string().c_str()}});
+    co_await EmailService::sendEmail(email.get_string().c_str(),EmailService::EmailType::WELCOME_EMAIL,emailData);
 
     response.result(boost::beast::http::status::ok);
     response.set(boost::beast::http::field::content_type,"application/json");
@@ -353,10 +350,8 @@ boost::asio::awaitable<void> UserHandler::sendVerificationCode(HttpRequest &&req
 
     co_await CacheStorage::getInstance()->set(std::string("otp:")+email.as_string().c_str(),otp,"1800");
 
-    co_await EmailService::sendEmail(email.as_string().c_str(), "OTP for Signup","Your OTP for creating new account is "
-    +otp+
-    "\nOTP will be valid for 10 minutes"
-    "\n\nTeam");
+    std::unordered_map<std::string,std::string> emailData({{"OTP",otp}});
+    co_await EmailService::sendEmail(email.as_string().c_str(), EmailService::EmailType::SIGNUP_OTP_EMAIL,emailData);
 
     response.result(boost::beast::http::status::ok);
     response.set(boost::beast::http::field::content_type,"application/json");
